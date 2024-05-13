@@ -1,10 +1,10 @@
 Package: humanMGP
-Title: What the Package Does (One Line, Title Case)
+Title: Multivariate Genotype-Phenotype analysis
 Version: 0.0.0.9000
 Authors@R: 
     person("Hanne", "Hoskens", , "hanne.hoskens@ucalgary.ca", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-1467-6461"))
-Description: What the package does (one paragraph).
+Description: Performs a two-block PLS on sets of genetic and shape variables based on "pls2B" from the Morpho package. The goal is to find pairs of latent variables that show maximal covariation with a set of genetic markers.
 License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
     license
 Encoding: UTF-8
