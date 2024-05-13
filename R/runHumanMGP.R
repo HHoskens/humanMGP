@@ -495,7 +495,7 @@ runHumanMGP <- function(GOterm,cohort,lm,scale,covs,window,ncomp,npc,signif,nper
   predmax = array(data=NA, dim = c(3,nlandmarks,ncomp))
   predavg = array(data=NA, dim = c(3,nlandmarks))
   for (i in 1:ncomp){
-    plsEffects = plsCoVar(mgp.pls, i=i, sdy=6)
+    plsEffects = plsCoVar(mgp.pls, i=i, sdy=3)
     if (lm == "sparse"){
       mesh = Morpho::file2mesh("/mnt/BHServer4/FaceBase_3/Data/Images/Atlas/Dense_2k_ears/dense_2k_ears_atlas.ply")
       ind_sparse = read.csv('/mnt/BHServer4/FaceBase_3/Data/Images/Atlas/Dense_2k_ears/sparse_65_ind.txt',header=F);
