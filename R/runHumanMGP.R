@@ -39,13 +39,17 @@ runHumanMGP <- function(GOterm,cohort,lm,scale,covs,window,ncomp,npc,signif,nper
   }
   
   if (missing(cohort)) {
-    stop("Please specify cohort (3DFN/TANZ)")
+    stop("Please specify cohort (3DFN or TANZ)")
+  }
+  cohort = toupper (cohort)
+  if (cohort != "3DFN" & cohort != "TANZ") {
+    stop("Please specify valid cohort (3DFN or TANZ)")
   }
 
   #  Optional
   if (missing(lm)) { lm = "sparse" }
   if (missing(scale)) { scale = T }
-  if (missing(covs)) { covs = c("none") }
+  if (missing(covs)) { covs = "none" }
   if (missing(window)) { window = 0e3 }
   if (missing(ncomp)) { ncomp = 1 }
   if (missing(npc)) { npc = 1 }
@@ -64,7 +68,7 @@ runHumanMGP <- function(GOterm,cohort,lm,scale,covs,window,ncomp,npc,signif,nper
   
   # Phenotypes
   if (lm == "sparse"){
-    tmp = read.csv(paste(loadpath1,"LM_",toupper(cohort),".csv",sep=""), header = F, sep = ",")
+    tmp = read.csv(paste(loadpath1,"LM_",cohort,".csv",sep=""), header = F, sep = ",")
     pheno.id = as.character(tmp[,1])
     pheno.coeff = as.matrix(tmp[,2:dim(tmp)[2]]); colnames(tmp) <- NULL
     pheno.avg = colMeans(pheno.coeff)
@@ -83,7 +87,7 @@ runHumanMGP <- function(GOterm,cohort,lm,scale,covs,window,ncomp,npc,signif,nper
   nlandmarks = 2565
   
   # Covariates
-  meta.cov = read.csv(paste(loadpath1,"COV_",toupper(cohort),".csv",sep=""), header = T, sep = ",")
+  meta.cov = read.csv(paste(loadpath1,"COV_",cohort,".csv",sep=""), header = T, sep = ",")
 
   # Genotypes
   if (cohort == "3DFN"){ 
@@ -114,7 +118,7 @@ runHumanMGP <- function(GOterm,cohort,lm,scale,covs,window,ncomp,npc,signif,nper
   }
   
   # Standardization
-  if (sum(covs == "none") == 1){
+  if ("none" %in% covs){
     # No standardization
     pheno.coeff.adj = pheno.coeff
     
@@ -123,10 +127,10 @@ runHumanMGP <- function(GOterm,cohort,lm,scale,covs,window,ncomp,npc,signif,nper
     cov_keep = meta.cov[,cov_idx]
     
     # Remove individuals with missing data
-    rm_row = arrayInd(which(is.na(cov_keep)),dim(cov_keep))[,1]
-    cov_keep = cov_keep[-rm_row,]
-    pheno.coeff = pheno.coeff[-rm_row,]
-    pheno.id = pheno.id[-rm_row]
+    keep_id = rowSums(is.na(cov_keep)) < 1
+    cov_keep = cov_keep[keep_id,]
+    pheno.coeff = pheno.coeff[keep_id,]
+    pheno.id = pheno.id[keep_id]
     
     # Make geomorph dataframe
     df = geomorph.data.frame(cov_keep)
