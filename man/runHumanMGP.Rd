@@ -25,8 +25,6 @@ runHumanMGP(
 
 \item{lm}{Sparse or dense landmarking scheme to be used ("sparse" or "dense"; default = sparse)}
 
-\item{scale}{Logical value indicating whether or not to scale to unit size (default = T)}
-
 \item{covs}{List of covariates to standardize for (options: "none", "age", "age2", "age3", "sex", "height", "weight", "csize")}
 
 \item{window}{Search window (in kb) around transcription start and end sites (default = 0kb)}

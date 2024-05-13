@@ -1,0 +1,286 @@
+# Load Packages
+
+```{r}
+library(devtools)
+library(rgl)
+library(ggplot2)
+library(cmocean)
+library(pals)
+library(RColorBrewer)
+library(plot3D)
+library(dplyr)
+library(dbplyr)# devtools::install_version("dbplyr", version = "2.3.4")
+library(Rvcg)
+library(Morpho)
+library(geomorph)
+library(shapes)
+library(ddsPLS)
+library(Jovid)#install_github("https://github.com/J0vid/Jovid")
+library(future)
+library(promises)
+future::plan("multicore")
+library(foreach)
+library(parallel)
+library(doParallel)
+library(GenomicFeatures)
+library(org.Hs.eg.db)#BiocManager::install("org.Hs.eg.db")
+library(GO.db)
+library(biomaRt)
+library(biomartr)
+library(GOSim)#BiocManager::install("GOSim")
+library(plinkFile)
+library(LDlinkR)
+library(paran)
+library(gmodels)
+
+```
+
+# MGP Core Function
+
+```{r}
+devtools::install_github("https://github.com/HHoskens/humanMGP")
+library(humanMGP)
+
+?runHumanMGP
+```
+
+# Run MGP
+
+```{r}
+#cohort = "3DFN"; lm = "sparse"; scale = T; covs = c("age","sex"); window = 0; ncomp = 5; npc =1; signif = T; nperm = 9; ncores = 5; 
+
+GOterm = "chondrocyte differentiation"
+GOterm = "GO:0033574"
+GOterm = c("SOX9", "PAX3", "ENSG00000125378")
+
+
+mgp.out = runHumanMGP(GOterm = GOterm, cohort = "3DFN", lm = "sparse", scale = T, covs = c("age","age2","age3","sex","height","weight","csize"), window = 0, ncomp = 2, npc = 1, signif = T, nperm = 99, ncores = 10)
+
+
+
+```
+
+# Select component for plotting
+
+```{r}
+# which component to visualize
+comp = 5
+
+```
+
+# Plot Gene Loadings
+
+## Individual
+
+```{r}
+pathway.loadings <- data.frame(gloadings = as.matrix(mgp.out$GeneLoadings[,comp]), gnames = rownames(mgp.out$GeneLoadings))
+
+# Reorder
+bar_order <- pathway.loadings %>% 
+  group_by(gnames) %>%
+  summarise(test = abs(gloadings)) %>%
+  arrange(-test) 
+pathway.loadings$gnames <- factor(x = pathway.loadings$gnames, levels = lapply(bar_order, as.character)$gnames)
+
+ggplot() +
+  geom_bar(data = pathway.loadings,
+           #aes(x = gnames, y = gloadings),
+           aes(x = gnames, y = abs(gloadings)),
+           stat = "identity",
+           width = .75,
+           position=position_dodge()) +
+  #xlab("Gene/Marker") +
+  xlab("") + 
+  ylab("Genetic marker loading") +
+  ggtitle(paste(mgp.out$GOterm, " - ", mgp.out$Cohort, " - ", "PLS component ", comp, sep = " "),) + 
+  theme(text = element_text(size=6),
+        axis.text.x = element_text(angle = 90, hjust = 1),
+        axis.title.x = element_text(margin = margin(t = 20)),
+        axis.text = element_text(angle = 0, hjust = 1, size = 9),
+        axis.title = element_text(size = 12, face = "bold"),
+        legend.text = element_text(size = 8),
+        legend.title = element_text(size = 8, face = "bold", hjust = .5),
+        plot.title = element_text(size = 12, face = "bold"))
+```
+
+## Sum (abs)
+Can be relevant if npc = "all"
+
+```{r}
+genes.name = unlist(strsplit(rownames(mgp.out$GeneLoadings),"_",fixed=T))
+genes.pc = genes.name[seq(2,length(genes.name),2)]
+genes.name = genes.name[seq(1,length(genes.name),2)]
+
+pathway.loadings <- data.frame(gloadings = as.matrix(mgp.out$GeneLoadings[,comp]), gnames = genes.name, pc = as.numeric(genes.pc))
+
+genes = unique(genes.name)
+gloadings = matrix(0,length(genes),1)
+for (i in 1:length(genes)){
+  ind = (genes.name %in% genes[i])
+  gloadings[i] = sum(abs(mgp.out$GeneLoadings[ind,comp]))
+}
+
+# Reorder
+ind = order(gloadings,decreasing = T)
+bar_order = tibble(gnames=genes[ind],test=gloadings[ind])
+
+pathway.loadings$gnames <- factor(x = pathway.loadings$gnames, levels = lapply(bar_order, as.character)$gnames)
+
+ggplot() +
+  geom_bar(data = pathway.loadings,
+           #aes(x = gnames, y = gloadings),
+           aes(x = gnames, y = abs(gloadings), fill = as.factor(pc)),
+           stat = "identity",
+           width = .75,
+           #position = position_stack(reverse=T)) +
+           position=position_dodge(preserve = "total")) +
+  #xlab("Gene/Marker") +
+  xlab("") + 
+  ylab("Combined gene loading") +
+  labs(fill = "PC") +
+  ggtitle(paste(mgp.out$GOterm, " - ", mgp.out$Cohort, " - ", "PLS component ", comp, sep = " "),) + 
+  theme(text = element_text(size=6),
+        axis.text.x = element_text(angle = 75, hjust = 1),
+        axis.title.x = element_text(margin = margin(t = 20)),
+        axis.text = element_text(angle = 0, hjust = 1, size = 12),
+        axis.title = element_text(size = 12, face = "bold"),
+        legend.text = element_text(size = 8),
+        legend.title = element_text(size = 8, face = "bold", hjust = .5),
+        plot.title = element_text(size = 12, face = "bold"),
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.y = element_blank()) +
+        #color = as.vector(ocean.balance(25))) 
+  #scale_fill_manual(values = colorRampPalette(brewer.pal(12, "Spectral"))(26))
+  scale_fill_manual(values=as.vector(ocean.delta(length(levels(as.factor(pathway.loadings$pc))))))
+  #scale_fill_manual(values=rep(as.vector(tol(12)),3)[1:26])
+
+#plot(genes.nPC,gloadings)
+```
+
+## Sum (weighted)
+Can be relevant if npc = "all"
+
+```{r}
+genes.name = unlist(strsplit(rownames(mgp.out$GeneLoadings),"_",fixed=T))
+genes.name = genes.name[seq(1,length(genes.name),2)]
+
+genes = unique(genes.name)
+genes.nPC = matrix(0,length(genes),1)
+gloadings = matrix(0,length(genes),1)
+gloadings.std = matrix(0,length(genes),1)
+for (i in 1:length(genes)){
+  ind = (genes.name %in% genes[i])
+  gloadings[i] = sum(abs(mgp.out$GeneLoadings[ind,comp]))
+  gloadings.std[i] = (sum(abs(mgp.out$GeneLoadings[ind,comp]))) / (sum(ind))
+  genes.nPC[i] = sum(ind)
+}
+
+pathway.loadings <- data.frame(gloadings = as.matrix(gloadings.std), gnames = genes, pc = genes.nPC)
+
+# Reorder
+bar_order <- pathway.loadings %>% 
+  group_by(gnames) %>%
+  summarise(test = abs(gloadings)) %>%
+  arrange(-test) 
+pathway.loadings$gnames <- factor(x = pathway.loadings$gnames, levels = lapply(bar_order, as.character)$gnames)
+
+ggplot() +
+  geom_bar(data = pathway.loadings,
+           #aes(x = gnames, y = gloadings),
+           aes(x = gnames, y = abs(gloadings), fill = as.factor(pc)),
+           stat = "identity",
+           width = .75,
+           position=position_dodge()) +
+  #xlab("Gene/Marker") +
+  xlab("") + 
+  ylab("Weighted Gene loading") +
+  labs(fill = "number of PCs") +
+  ggtitle(paste(mgp.out$GOterm, " - ", mgp.out$Cohort, " - ", "PLS component ", comp, sep = " "),) + 
+  theme(text = element_text(size=6),
+        axis.text.x = element_text(angle = 75, hjust = 1),
+        axis.title.x = element_text(margin = margin(t = 20)),
+        axis.text = element_text(angle = 0, hjust = 1, size = 12),
+        axis.title = element_text(size = 12, face = "bold"),
+        legend.text = element_text(size = 8),
+        legend.title = element_text(size = 8, face = "bold", hjust = .5),
+        plot.title = element_text(size = 12, face = "bold")) +
+  #scale_fill_manual(values=as.vector(tol.rainbow(length(levels(as.factor(pathway.loadings$pc))))))
+  scale_fill_manual(values=as.vector(ocean.delta(length(levels(as.factor(pathway.loadings$pc))))))
+
+  #scale_fill_manual(values=as.vector(magma(15))[seq(15,1,-1)])
+
+#plot(genes.nPC,gloadings.std)
+
+```
+
+# Plot Pheno Loadings
+
+```{r}
+# Load Meshes
+mesh = Morpho::file2mesh("/mnt/BHServer/Hallgrimsson/Collaborations/FaceBase/Data/Images/Atlas/Dense_2k_ears/dense_2k_ears_atlas.ply")
+nlandmarks = dim(mesh$vb)[2]
+
+# Average
+avg = mesh; avg$vb[1:3,] = mgp.out$ShapeAverage
+
+# MGP effect
+pred_min = mesh; pred_min$vb[1:3,] = mgp.out$ShapeEffectMin[,,comp]
+pred_max = mesh; pred_max$vb[1:3,] = mgp.out$ShapeEffectMax[,,comp]
+```
+
+## Average
+
+```{r}
+open3d(zoom = .65); 
+plot3d(avg, col = adjustcolor("grey", .3), alpha = .9, specular = 1, axes = F, box = F, xlab = "", ylab = "", zlab = "", main = "", aspect = "iso", add = F)
+view3d(theta=1, phi=5, fov=45)
+```
+
+## MGP effect
+
+```{r}
+open3d(zoom = .65); 
+plot3d(pred_min, col = adjustcolor("darkgrey", .3), alpha = .9, specular = 1, axes = F, box = F, xlab = "", ylab = "", zlab = "", main = "", aspect = "iso", add = F)
+view3d(theta=1, phi=5, fov=45)
+
+open3d(zoom = .65); 
+plot3d(pred_max, col = adjustcolor("lightgrey", .3), alpha = .9, specular = 1, axes = F, box = F, xlab = "", ylab = "", zlab = "", main = "", aspect = "iso", add = F)
+view3d(theta=1, phi=5, fov=45)
+
+```
+
+## Overlay
+
+```{r}
+open3d(zoom = .65); 
+plot3d(pred_min, col = "darkgrey", alpha = .7, specular = 1, axes = F, box = F, xlab = "", ylab = "", zlab = "", main = "", aspect = "iso", add = T)
+plot3d(pred_max, col = "lightgrey", alpha = .7, specular = 1, axes = F, box = F, xlab = "", ylab = "", zlab = "", main = "", aspect = "iso", add = T, type = "wire")
+view3d(theta=1, phi=5, fov=45)
+view3d(theta=98, phi=-5, fov=45)
+```
+
+## Heatmap
+
+```{r}
+avg = mesh; avg$vb = (pred_min$vb + pred_max$vb)/2
+tmp = meshDist(avg, pred_max, plot = F)
+open3d(zoom = .65)
+meshDist(avg, pred_max, rampcolors = coolwarm(5), plot = T, steps = 100, scaleramp = T, from = -max(abs(tmp$dists)), to = max(abs(tmp$dists)))
+view3d(theta=1, phi=5, fov=45)
+```
+
+## Animation
+
+```{r}
+open3d(zoom = .65); 
+scan = mesh; scan$vb[1:3,] = pred_max$vb[1:3,]
+plot3d(scan, col = "darkgrey", alpha = .9, specular = 1, axes = F, box = F, xlab = "", ylab = "", zlab = "", main = "", aspect = "iso", add = F)
+view3d(theta=0, phi=0, fov=45)
+for (i in rep(c(seq(0,1,0.1),seq(1,0,-0.1)),1)) {
+  scan$vb[1:3,] = pred_max$vb[1:3,] + i*(pred_min$vb[1:3,] - pred_max$vb[1:3,])
+  #clear3d()
+  ids=plot3d(scan, col = "darkgrey", alpha = .9, specular = 1, axes = F, box = F, xlab = "", ylab = "", zlab = "", main = "", aspect = "iso", add = F)
+  view3d(theta=0, phi=0, fov=45)
+  Sys.sleep(.2)
+}
+```

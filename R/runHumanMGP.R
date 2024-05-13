@@ -6,7 +6,6 @@
 #' @param GOterm GO term (name or ID) or gene list (names or ensembl ID) of interest
 #' @param cohort Cohort to be analyzed ("3DFN" or "TANZ")
 #' @param lm Sparse or dense landmarking scheme to be used ("sparse" or "dense"; default = sparse)
-#' @param scale Logical value indicating whether or not to scale to unit size (default = T)
 #' @param covs List of covariates to standardize for (options: "none", "age", "age2", "age3", "sex", "height", "weight", "csize")
 #' @param window Search window (in kb) around transcription start and end sites (default = 0kb)
 #' @param ncomp Number of PLS components to consider (default = 1)
@@ -113,16 +112,11 @@ runHumanMGP <- function(GOterm,cohort,lm,scale,covs,window,ncomp,npc,signif,nper
   sort_idx2 = match(pheno.id,meta.cov$IID)
   meta.cov = meta.cov[sort_idx2,]
   
-  #  Scale images to unit size
-  if (scale == T){
-    csize = matrix(data=meta.cov$CSize, nrow = nrow(pheno.coeff), ncol = ncol(pheno.coeff))
-    pheno.coeff = pheno.coeff/csize
-  }
-  
   # Standardization
   if ("none" %in% covs){
     # No standardization
     pheno.coeff.adj = pheno.coeff
+    pheno.avg.adj = pheno.avg
     
   } else {
     cov_idx = match(tolower(covs),tolower(colnames(meta.cov)))
@@ -143,9 +137,11 @@ runHumanMGP <- function(GOterm,cohort,lm,scale,covs,window,ncomp,npc,signif,nper
     mod = procD.lm(f1, data = df, RRPP = T, iter = 99, Parallel = ncores)
 
     # Get residuals
-    pheno.coeff.adj = mod$residuals
+    pheno.coeff.adj = matrix(data=pheno.avg,nrow=nrow(pheno.coeff),ncol=ncol(pheno.coeff),byrow = T) + mod$residuals
+    pheno.avg.adj = colMeans(pheno.coeff.adj)
   }
 
+  
   
   
 
@@ -386,7 +382,7 @@ runHumanMGP <- function(GOterm,cohort,lm,scale,covs,window,ncomp,npc,signif,nper
   max_comp = min(dim(X)[2],dim(Y)[2])
   if (ncomp > max_comp) { 
     ncomp = max_comp
-    print(paste("Maximum number of PLS components is ", ncomp, sep=""))
+    cat("\033[33m", paste("Maximum number of PLS components is ", ncomp, sep=""), "\033[0m", "\n")
   }
   
   
@@ -497,6 +493,7 @@ runHumanMGP <- function(GOterm,cohort,lm,scale,covs,window,ncomp,npc,signif,nper
   # Pheno
   predmin = array(data=NA, dim = c(3,nlandmarks,ncomp))
   predmax = array(data=NA, dim = c(3,nlandmarks,ncomp))
+  predavg = array(data=NA, dim = c(3,nlandmarks))
   for (i in 1:ncomp){
     plsEffects = plsCoVar(mgp.pls, i=i, sdy=6)
     if (lm == "sparse"){
@@ -508,7 +505,7 @@ runHumanMGP <- function(GOterm,cohort,lm,scale,covs,window,ncomp,npc,signif,nper
       predmaxlm = matrix((pheno.avg + plsEffects$y[2,]),3,nsplandmarks)
       predmin[,,i] = tps3d(mesh,t(sparse_lm),t(predminlm),lambda=0,threads=ncores)$vb[1:3,]
       predmax[,,i] = tps3d(mesh,t(sparse_lm),t(predmaxlm),lambda=0,threads=ncores)$vb[1:3,]
-      pheno.avg = tps3d(mesh,t(sparse_lm),t(matrix(pheno.avg,3,nsplandmarks)),lambda=0,threads=ncores)$vb[1:3,]
+      if (i==1){ predavg = tps3d(mesh,t(sparse_lm),t(matrix(pheno.avg,3,nsplandmarks)),lambda=0,threads=ncores)$vb[1:3,] }
       
     } else if (lm == "dense"){
       #predmin[,,i] = pheno.avg + t(row2array3d(t(pca.eigvec %*% plsEffects$y[1,]), Nlandmarks = nlandmarks)[,,1])
@@ -517,11 +514,11 @@ runHumanMGP <- function(GOterm,cohort,lm,scale,covs,window,ncomp,npc,signif,nper
   }
   dimnames(predmin)[[1]] <- c("x","y","z");   dimnames(predmin)[[2]] <- paste("LM",1:nlandmarks, sep = "");   dimnames(predmin)[[3]] <- paste("PLS",1:ncomp, sep = "")
   dimnames(predmax)[[1]] <- c("x","y","z");   dimnames(predmax)[[2]] <- paste("LM",1:nlandmarks, sep = "");   dimnames(predmax)[[3]] <- paste("PLS",1:ncomp, sep = "")
-  dimnames(pheno.avg)[[1]] <- c("x","y","z");   dimnames(pheno.avg)[[2]] <- paste("LM",1:nlandmarks, sep = "")
+  dimnames(predavg)[[1]] <- c("x","y","z");   dimnames(predavg)[[2]] <- paste("LM",1:nlandmarks, sep = "")
   
   out$ShapeEffectMax = predmax
   out$ShapeEffectMin = predmin
-  out$ShapeAverage = pheno.avg
+  out$ShapeAverage = predavg
   
   # Measures of effect size
   mgp.sv = matrix(mgp.sv,nrow=1,ncol=ncomp,byrow=T)

@@ -57,7 +57,7 @@ lms = permute(lms,[2 1 3]);
 
 % Make sure they are aligned
 iter = 3; scale = false; reflect = false; display = false;
-[lms,avg,csize,~] = GeneralizedProcrustesAnalysis(lms,sAtlas,iter,scale,reflect,display);
+[lms,avg,~,~] = GeneralizedProcrustesAnalysis(lms,sAtlas,iter,scale,reflect,display);
 
 
 
@@ -76,7 +76,7 @@ covs.ImageID = image_id;
 covs.IID = gen_iid;
 covs.Age2 = covs.Age.^2;
 covs.Age3 = covs.Age.^3;
-covs.CSize = csize';
+%covs.CSize = csize';
 
 
 
@@ -113,13 +113,16 @@ idx_refl = 1:sAtlas.nVertices; idx_refl([left right]) = idx_refl([right left]);
 orig = lm3DFN;
 refl = orig; refl(:,1,:) = -1 * refl(:,1,:); refl = refl(idx_refl,:,:);
 
-iter = 3; scale = false; reflect = false; display = false;  
+iter = 3; scale = true; reflect = false; display = false;  
 totalLM = cat(3,orig,refl);
-[aligned3DFN,avg3DFN,~,~] = GeneralizedProcrustesAnalysis(totalLM,sAtlas,iter,scale,reflect,display);
+[aligned3DFN,avg3DFN,csize3DFN,~] = GeneralizedProcrustesAnalysis(totalLM,sAtlas,iter,scale,reflect,display);
 
 orig = aligned3DFN(:,:,1:n3DFN);
 refl = aligned3DFN(:,:,n3DFN+1:end);
 sym3DFN = (orig+refl)/2;
+
+% Add centroid size
+cov3DFN.CSize = csize3DFN(1:n3DFN)';
 
 % Quick check
 scan = shape3D; v = viewer(scan); v.SceneLightVisible = true;
@@ -160,13 +163,16 @@ idx_refl = 1:sAtlas.nVertices; idx_refl([left right]) = idx_refl([right left]);
 orig = lmTANZ;
 refl = orig; refl(:,1,:) = -1 * refl(:,1,:); refl = refl(idx_refl,:,:);
 
-iter = 3; scale = false; reflect = false; display = false;  
+iter = 3; scale = true; reflect = false; display = false;  
 totalLM = cat(3,orig,refl);
-[alignedTANZ,avgTANZ,~,~] = GeneralizedProcrustesAnalysis(totalLM,sAtlas,iter,scale,reflect,display);
+[alignedTANZ,avgTANZ,csizeTANZ,~] = GeneralizedProcrustesAnalysis(totalLM,sAtlas,iter,scale,reflect,display);
 
 orig = alignedTANZ(:,:,1:nTANZ);
 refl = alignedTANZ(:,:,nTANZ+1:end);
 symTANZ = (orig+refl)/2;
+
+% Add centroid size
+covTANZ.CSize = csizeTANZ(1:nTANZ)';
 
 % Quick check
 scan = shape3D; v = viewer(scan); v.SceneLightVisible = true;
