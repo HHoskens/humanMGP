@@ -124,12 +124,12 @@ runHumanMGP <- function(GOterm,cohort,lm,scale,covs,window,ncomp,npc,signif,nper
     
   } else {
     cov_idx = match(tolower(covs),tolower(colnames(meta.cov)))
-    cov_keep = meta.cov[,cov_idx]
+    cov_keep = meta.cov[,cov_idx,drop=F]
     
     # Remove individuals with missing data
     keep_id = rowSums(is.na(cov_keep)) < 1
-    cov_keep = cov_keep[keep_id,]
-    pheno.coeff = pheno.coeff[keep_id,]
+    cov_keep = cov_keep[keep_id,,drop=F]
+    pheno.coeff = pheno.coeff[keep_id,,drop=F]
     pheno.id = pheno.id[keep_id]
     
     # Make geomorph dataframe
