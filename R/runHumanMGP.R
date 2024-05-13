@@ -63,6 +63,7 @@ runHumanMGP <- function(GOterm,cohort,lm,scale,covs,window,ncomp,npc,signif,nper
   
 
   ## LOAD DATA ####
+  cat("\033[32m", "STEP 1: LOADING PHENOTYPES", "\033[0m", "\n")
   loadpath1 = "/mnt/BHServer4/FaceBase_3/Analysis/HumanMGP/Data/"
   loadpath2 = "/mnt/BHServer4/FaceBase_3/Data/Genetics/"
   
@@ -103,6 +104,7 @@ runHumanMGP <- function(GOterm,cohort,lm,scale,covs,window,ncomp,npc,signif,nper
   
   
   ## COVARIATE ADJUSTMENT ####
+  cat("\033[32m", "STEP 2: COVARIATE STANDARDIZATION", "\033[0m", "\n")
   #  Only keep individuals that have covariate info
   sort_idx1 = pheno.id %in% meta.cov$IID
   pheno.id = pheno.id[sort_idx1]
@@ -138,10 +140,8 @@ runHumanMGP <- function(GOterm,cohort,lm,scale,covs,window,ncomp,npc,signif,nper
     
     # Fit model
     f1 = as.formula(paste(names(df)[length(df)],(paste(names(df)[1:(length(df)-1)], collapse = " + ")), sep = " ~ "))
-    print("Performing covariate standardization")
     mod = procD.lm(f1, data = df, RRPP = T, iter = 99, Parallel = ncores)
-    print("Covariate standardization finished")
-    
+
     # Get residuals
     pheno.coeff.adj = mod$residuals
   }
@@ -150,6 +150,7 @@ runHumanMGP <- function(GOterm,cohort,lm,scale,covs,window,ncomp,npc,signif,nper
   
 
   ## GENE/GO SEARCH TERM ####
+  cat("\033[32m", "STEP 3: MATCH GENES TO PROVIDED SEARCH TERM", "\033[0m", "\n")
   # List all IDs of GO terms available in org.Hs object, and reduce to biological processes
   GO_ID = toTable(org.Hs.egGO)
   GO_ID = unique(GO_ID$go_id[GO_ID$Ontology == "BP"])
@@ -189,8 +190,9 @@ runHumanMGP <- function(GOterm,cohort,lm,scale,covs,window,ncomp,npc,signif,nper
     #symbol2info2 <- symbol2info2@unlistData
     
     # List genes that were not found in list
-    if (sum(is.na(ind))>0) { print(paste("No match was found for ", gsub(" ",", ",paste(GOterm[is.na(ind)],collapse = " ")), sep="")) }
- 
+    if (sum(is.na(ind))>0) { cat("\033[33m", paste("No match was found for ", gsub(" ",", ",paste(GOterm[is.na(ind)],collapse = " ")), sep=""), "\033[0m", "\n") }
+    
+    
   # No match is found  
   } else {
     stop("No match was found for GO term")
@@ -200,6 +202,7 @@ runHumanMGP <- function(GOterm,cohort,lm,scale,covs,window,ncomp,npc,signif,nper
   
   
   ## GENES TX START-END SITE ####   
+  cat("\033[32m", "STEP 4A: MAP SNPs TO GENE LIST", "\033[0m", "\n")
   ensembl = useEnsembl(biomart="ensembl", dataset="hsapiens_gene_ensembl", GRCh=GRCh)
   symbol2info = getBM(attributes = c('ensembl_gene_id','chromosome_name','transcript_start', 'transcript_end', 'hgnc_symbol'), 
                       mart = ensembl, 
@@ -327,6 +330,8 @@ runHumanMGP <- function(GOterm,cohort,lm,scale,covs,window,ncomp,npc,signif,nper
   
 
   ## GET GENE COMPOSITE SCORE ####
+  cat("\033[32m", "STEP 4B: GET GENE COMPOSITE SCORE", "\033[0m", "\n")
+  
   #  Do PCA per gene
   gene.names <- unique(seq.indexes$gene)
   n_gen <- length(gene.names)
@@ -368,6 +373,8 @@ runHumanMGP <- function(GOterm,cohort,lm,scale,covs,window,ncomp,npc,signif,nper
   
 
   ## TWO BLOCK PLS ####
+  cat("\033[32m", "STEP 5: TWO-BLOCK PLS", "\033[0m", "\n")
+  
   X = as.matrix(gene.score)
   colnames(X) = gene.id
   Y = as.matrix(pheno.coeff.adj)
@@ -386,6 +393,8 @@ runHumanMGP <- function(GOterm,cohort,lm,scale,covs,window,ncomp,npc,signif,nper
   
   
   ## SIGNIFICANCE TESTING ####
+  cat("\033[32m", "STEP 6: SIGNIFICANCE TESTING", "\033[0m", "\n")
+  
   # SV
   mgp.sv = mgp.pls$CoVar$`singular value`[1:ncomp]
     
@@ -418,7 +427,6 @@ runHumanMGP <- function(GOterm,cohort,lm,scale,covs,window,ncomp,npc,signif,nper
   }
     
   if (signif==T){
-    print("Start significance testing")
     registerDoParallel(cores=ncores)
     
     # Permutation
@@ -465,13 +473,14 @@ runHumanMGP <- function(GOterm,cohort,lm,scale,covs,window,ncomp,npc,signif,nper
     mgp.r2.p <- (colSums(matrix(data=mgp.r2,nrow = nperm, ncol = ncomp, byrow = T) <= perm.r2) + 1)/(nperm + 1)
     mgp.pdist.p <- (colSums(matrix(data=mgp.pdist,nrow = nperm, ncol = ncomp, byrow = T) <= perm.pdist) + 1)/(nperm + 1)
     
-    print("Significance testing finished")
   }
   
   
   
   
   ## EXPORT RESULTS ####
+  cat("\033[32m", "STEP 7: SAVE RESULTS", "\033[0m", "\n")
+  
   out <- list()
   out$GOterm = GOterm
   out$Cohort = cohort
@@ -531,7 +540,8 @@ runHumanMGP <- function(GOterm,cohort,lm,scale,covs,window,ncomp,npc,signif,nper
   out$PD = mgp.pdist
 
   
-
+  cat("\033[32m", "FINISHED", "\033[0m", "\n")
+  
   return(out)
 
 }
