@@ -47,16 +47,12 @@ library(humanMGP)
 # Run MGP
 
 ```{r}
-#cohort = "3DFN"; lm = "sparse"; scale = T; covs = c("age","sex"); window = 0; ncomp = 5; npc =1; signif = T; nperm = 9; ncores = 5; 
-
 GOterm = "chondrocyte differentiation"
 GOterm = "GO:0033574"
 GOterm = c("SOX9", "PAX3", "ENSG00000125378")
 
 
-mgp.out = runHumanMGP(GOterm = GOterm, cohort = "3DFN", lm = "sparse", scale = T, covs = c("age","age2","age3","sex","height","weight","csize"), window = 0, ncomp = 2, npc = 1, signif = T, nperm = 99, ncores = 10)
-
-
+mgp.out = runHumanMGP(GOterm = GOterm, cohort = "TANZ", lm = "sparse", covs = c("age","age2","age3","sex","height","weight","csize"), window = 0, ncomp = 2, npc = "all", signif = T, nperm = 99, ncores = 10)
 
 ```
 
@@ -64,7 +60,7 @@ mgp.out = runHumanMGP(GOterm = GOterm, cohort = "3DFN", lm = "sparse", scale = T
 
 ```{r}
 # which component to visualize
-comp = 5
+comp = 1
 
 ```
 
