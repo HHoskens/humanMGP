@@ -5,10 +5,8 @@
 #' @param obj runHumanMGP object
 #' @param comp Which PLS component to visualize (default = 1)
 #' @param type Type of plot (options: "single", "sum1", "sum2", "weighted"; default = "single")
-#' single = plot individual loadings per gene (or per genetic PC)
-#' sum1 = abs. sum of genetic PCs per gene (stacked)
-#' sum2 = abs. sum of genetic PCs per gene (individual)
-#' weighted = abs. sum of genetic PCs, weighted by number of PCs, per gene
+#' 
+#' single = plot individual loadings per gene (or per genetic PC); sum1 = abs. sum of genetic PCs per gene (stacked); sum2 = abs. sum of genetic PCs per gene (individual); weighted = abs. sum of genetic PCs, weighted by number of PCs, per gene
 #'
 #' @author Hanne Hoskens
 #' 
@@ -137,7 +135,7 @@ plotMGPLoadings <- function(obj, comp, type, colormap){
   p = p +
     labs(x = "",
          y = "Gene loadings",
-         title = toupper(obj$GOterm),
+         #title = toupper(obj$GOterm),
          subtitle = paste(obj$Cohort, ", ", "PLS ", comp, sep = ""),
          fill = "number of composite PCs") +
     theme(text = element_text(size=6),
@@ -151,6 +149,9 @@ plotMGPLoadings <- function(obj, comp, type, colormap){
           plot.subtitle = element_text(size = 10)) +
     scale_fill_manual(values=as.vector(ocean.delta(length(levels(as.factor(pathway.loadings$pc))))))
 
+    if (length(obj$GOterm)>1){ p = p + labs(title = "Custom gene list") 
+    } else { p = p + labs(title = toupper(obj$GOterm)) } 
+  
     if (type == "single"){ p = p + theme(legend.position = "none") }
 
   p
