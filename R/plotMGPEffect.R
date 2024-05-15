@@ -1,3 +1,5 @@
+MGPobj = setClass("MGPobj")
+
 plotMGPEffect = function(object){
   UseMethod("plotMGPEffect")
 }
