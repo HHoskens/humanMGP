@@ -99,10 +99,10 @@ plotMGPLoadings <- function(obj, comp, type, colormap){
     
   
   # Plot gene loadings
-  if (type == "single" | type == "weighted"){
+  if (type == "single"){
     p = ggplot() +
       geom_bar(data = pathway.loadings,
-             aes(x = gnames, y = abs(gloadings), fill = as.factor(pc)),
+             aes(x = gnames, y = abs(gloadings)),
              stat = "identity",
              width = .75,
              position=position_dodge())
@@ -122,7 +122,15 @@ plotMGPLoadings <- function(obj, comp, type, colormap){
              stat = "identity",
              width = .75,
              position=position_dodge(preserve = "total"))
-    }
+    
+  } else if (type == "weighted"){
+    p = ggplot() +
+      geom_bar(data = pathway.loadings,
+               aes(x = gnames, y = abs(gloadings), fill = as.factor(pc)),
+               stat = "identity",
+               width = .75,
+               position=position_dodge())
+  }
     
     
   # Add axes
@@ -145,7 +153,7 @@ plotMGPLoadings <- function(obj, comp, type, colormap){
 
     if (type == "single"){ p = p + theme(legend.position = "none") }
 
-    p
+  p
       
   
 }
