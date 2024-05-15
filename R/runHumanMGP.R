@@ -29,7 +29,7 @@
 #' @author Hanne Hoskens
 #' 
 #' @export
-runHumanMGP <- function(GOterm,cohort,lm,scale,covs,window,ncomp,npc,signif,nperm,ncores){
+runHumanMGP <- function(GOterm,cohort,lm,covs,window,ncomp,npc,signif,nperm,ncores){
   
   ## SPECIFY INPUT VARIABLES ####
   #  Required
@@ -47,7 +47,6 @@ runHumanMGP <- function(GOterm,cohort,lm,scale,covs,window,ncomp,npc,signif,nper
 
   #  Optional
   if (missing(lm)) { lm = "sparse" }
-  if (missing(scale)) { scale = T }
   if (missing(covs)) { covs = "none" }
   if (missing(window)) { window = 0e3 }
   if (missing(ncomp)) { ncomp = 1 }
@@ -61,6 +60,7 @@ runHumanMGP <- function(GOterm,cohort,lm,scale,covs,window,ncomp,npc,signif,nper
   }
   
 
+  
   ## LOAD DATA ####
   cat("\033[32m", "STEP 1: LOADING PHENOTYPES", "\033[0m", "\n")
   loadpath1 = "/mnt/BHServer4/FaceBase_3/Analysis/HumanMGP/Data/"
@@ -91,9 +91,9 @@ runHumanMGP <- function(GOterm,cohort,lm,scale,covs,window,ncomp,npc,signif,nper
 
   # Genotypes
   if (cohort == "3DFN"){ 
-    bfile = paste(loadpath2,"Pitt/QC/Prune/Marazita_imputed_qc_prune",sep="") 
+    bfile = paste(loadpath2,"Pitt/QC/Prune/Marazita_imputed_qc_prune_rmrel",sep="") 
   } else if (cohort == "TANZ"){ 
-    bfile = paste(loadpath2,"Tanz/QC/Prune/Spritz_imputed_qc_prune",sep="") 
+    bfile = paste(loadpath2,"Tanz/QC/Prune/Spritz_imputed_qc_prune_rmrel",sep="") 
   }
   geno.full.bim = readBIM(bfile)
   geno.full.fam =  readFAM(bfile)
@@ -137,7 +137,7 @@ runHumanMGP <- function(GOterm,cohort,lm,scale,covs,window,ncomp,npc,signif,nper
     mod = procD.lm(f1, data = df, RRPP = T, iter = 99, Parallel = ncores)
 
     # Get residuals
-    pheno.coeff.adj = matrix(data=pheno.avg,nrow=nrow(pheno.coeff),ncol=ncol(pheno.coeff),byrow = T) + mod$residuals
+    pheno.coeff.adj = mod$residuals + matrix(data=pheno.avg,nrow=nrow(pheno.coeff),ncol=ncol(pheno.coeff),byrow = T)
     pheno.avg.adj = colMeans(pheno.coeff.adj)
   }
 
@@ -267,13 +267,13 @@ runHumanMGP <- function(GOterm,cohort,lm,scale,covs,window,ncomp,npc,signif,nper
   tmp_path = paste(path.expand("~"),"tmp_mgp/",sep = "/") 
   if (!dir.exists(tmp_path)){ dir.create(tmp_path) }
   
-  # Temporarily export SNPs/IDs to keep
+  # Temporarily export SNPs to keep
   rnd_i = sample(1:1e6,1)
   tmp = seq.indexes$snp
   write.csv(tmp, file = paste(tmp_path,"tmp_snp_list_",rnd_i,".txt",sep=""),row.names = F, quote = F)
 
   # Run PLINK
-  # Extract SNPs and IDs
+  # Extract SNPs + remove related individuals
   system2(plink_path, args = paste(" --bfile ", bfile, " --threads ", ncores, " --extract ", tmp_path, "tmp_snp_list_", rnd_i, ".txt --make-bed --out ", tmp_path, "tmp_geno_", rnd_i, " > NUL", sep=""))
 
   # Import geno files
@@ -332,7 +332,7 @@ runHumanMGP <- function(GOterm,cohort,lm,scale,covs,window,ncomp,npc,signif,nper
   gene.names <- unique(seq.indexes$gene)
   n_gen <- length(gene.names)
   
-  gene.score = matrix(NA,dim(pheno.coeff)[1],1e4)
+  gene.score = matrix(NA,dim(pheno.coeff.adj)[1],1e4)
   gene.id = matrix(NA,1,1e4)
   gene.n = matrix(NA,1,1e4)
   count = 0
@@ -495,21 +495,21 @@ runHumanMGP <- function(GOterm,cohort,lm,scale,covs,window,ncomp,npc,signif,nper
   predmax = array(data=NA, dim = c(3,nlandmarks,ncomp))
   predavg = array(data=NA, dim = c(3,nlandmarks))
   for (i in 1:ncomp){
-    plsEffects = plsCoVar(mgp.pls, i=i, sdy=3)
+    plsEffects = plsCoVar(mgp.pls, i=i, sdy=6)
     if (lm == "sparse"){
       mesh = Morpho::file2mesh("/mnt/BHServer4/FaceBase_3/Data/Images/Atlas/Dense_2k_ears/dense_2k_ears_atlas.ply")
       ind_sparse = read.csv('/mnt/BHServer4/FaceBase_3/Data/Images/Atlas/Dense_2k_ears/sparse_65_ind.txt',header=F);
       sparse_lm = mesh$vb[1:3,as.matrix(ind_sparse)]
       
-      predminlm = matrix((pheno.avg + plsEffects$y[1,]),3,nsplandmarks)
-      predmaxlm = matrix((pheno.avg + plsEffects$y[2,]),3,nsplandmarks)
-      predmin[,,i] = tps3d(mesh,t(sparse_lm),t(predminlm),lambda=0,threads=ncores)$vb[1:3,]
-      predmax[,,i] = tps3d(mesh,t(sparse_lm),t(predmaxlm),lambda=0,threads=ncores)$vb[1:3,]
-      if (i==1){ predavg = tps3d(mesh,t(sparse_lm),t(matrix(pheno.avg,3,nsplandmarks)),lambda=0,threads=ncores)$vb[1:3,] }
+      predminlm = matrix((pheno.avg.adj + plsEffects$y[1,]),3,nsplandmarks)
+      predmaxlm = matrix((pheno.avg.adj + plsEffects$y[2,]),3,nsplandmarks)
+      predmin[,,i] = tps3d(mesh,t(sparse_lm),t(predminlm),threads=ncores)$vb[1:3,]
+      predmax[,,i] = tps3d(mesh,t(sparse_lm),t(predmaxlm),threads=ncores)$vb[1:3,]
+      if (i==1){ predavg = tps3d(mesh,t(sparse_lm),t(matrix(pheno.avg.adj,3,nsplandmarks)),threads=ncores)$vb[1:3,] }
       
     } else if (lm == "dense"){
-      #predmin[,,i] = pheno.avg + t(row2array3d(t(pca.eigvec %*% plsEffects$y[1,]), Nlandmarks = nlandmarks)[,,1])
-      #predmax[,,i] = pheno.avg + t(row2array3d(t(pca.eigvec %*% plsEffects$y[2,]), Nlandmarks = nlandmarks)[,,1])
+      #predmin[,,i] = pheno.avg.adj + t(row2array3d(t(pca.eigvec %*% plsEffects$y[1,]), Nlandmarks = nlandmarks)[,,1])
+      #predmax[,,i] = pheno.avg.adj + t(row2array3d(t(pca.eigvec %*% plsEffects$y[2,]), Nlandmarks = nlandmarks)[,,1])
     }
   }
   dimnames(predmin)[[1]] <- c("x","y","z");   dimnames(predmin)[[2]] <- paste("LM",1:nlandmarks, sep = "");   dimnames(predmin)[[3]] <- paste("PLS",1:ncomp, sep = "")
@@ -539,6 +539,7 @@ runHumanMGP <- function(GOterm,cohort,lm,scale,covs,window,ncomp,npc,signif,nper
   
   cat("\033[32m", "FINISHED", "\033[0m", "\n")
   
+  class(out) = "MGPobj"
   return(out)
 
 }

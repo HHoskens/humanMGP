@@ -8,7 +8,6 @@ runHumanMGP(
   GOterm,
   cohort,
   lm,
-  scale,
   covs,
   window,
   ncomp,
