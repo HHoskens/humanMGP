@@ -73,14 +73,17 @@ plotMGPEffect <- function(obj, comp, type, sdy, lambda, ncores){
     
   } else if (type == "overlay"){
     open3d(zoom = .65); 
-    plot3d(pred_min, col = "darkgrey", alpha = .7, specular = 1, axes = F, box = F, xlab = "", ylab = "", zlab = "", main = "", aspect = "iso", add = T)
-    plot3d(pred_max, col = "lightgrey", alpha = .7, specular = 1, axes = F, box = F, xlab = "", ylab = "", zlab = "", main = "", aspect = "iso", add = T, type = "wire")
+    plot3d(out$predmin, col = "darkgrey", alpha = .7, specular = 1, axes = F, box = F, xlab = "", ylab = "", zlab = "", main = "", aspect = "iso", add = T)
+    plot3d(out$predmax, col = "lightgrey", alpha = .7, specular = 1, axes = F, box = F, xlab = "", ylab = "", zlab = "", main = "", aspect = "iso", add = T, type = "wire")
     view3d(theta=98, phi=-5, fov=45)
     
   } else if (type == "heatmap"){
-    tmpdist = meshDist(obj$ShapeAverage, out$predmax, plot = F)
+    avg = mesh; avg$vb = (out$predmin$vb + out$predmax$vb)/2
+    
+    tmpdist = meshDist(avg, out$predmax, plot = F)
+    
     open3d(zoom = .65)
-    meshDist(obj$ShapeAverage, out$predmax, rampcolors = coolwarm(5), plot = T, steps = 100, scaleramp = T, from = -max(abs(tmpdist$dists)), to = max(abs(tmpdist$dists)))
+    meshDist(avg, out$predmax, rampcolors = coolwarm(5), plot = T, steps = 100, scaleramp = T, from = -max(abs(tmpdist$dists)), to = max(abs(tmpdist$dists)))
     view3d(theta=1, phi=5, fov=45)
   }
   
