@@ -154,6 +154,7 @@ plotMGPLoadings <- function(obj, comp, type, colormap){
   
     if (type == "single"){ p = p + theme(legend.position = "none") }
 
+  dev.new()
   p
       
   
