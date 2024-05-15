@@ -539,7 +539,6 @@ runHumanMGP <- function(GOterm,cohort,lm,covs,window,ncomp,npc,signif,nperm,ncor
   
   cat("\033[32m", "FINISHED", "\033[0m", "\n")
   
-  class(out) = "MGPobj"
   return(out)
 
 }
