@@ -30,6 +30,15 @@ plotMGPEffect <- function(obj, comp, type, sdy, lambda, ncores){
   if (missing(lambda)) { lambda = 1e-08 }
   if (missing(ncores)) { ncores = 1 }
   
+  max_comp = dim(obj$GeneLoadings)[2]
+  if (comp > max_comp) {
+    cat("\033[33m", paste("Maximum number of components is ", max_comp, sep = ""), "\033[0m", "\n")
+    cat("\033[33m", "Plotting PLS1 instead", "\033[0m", "\n")
+  }
+  if (length(comp)>1){
+    stop("Please only select one PLS component at a time")
+  }
+  
   #nlandmarks = 
   nsplandmarks = 65
   
