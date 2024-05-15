@@ -39,10 +39,11 @@ plotMGPEffect <- function(obj, comp, sdy, lambda, ncores){
     predmaxlm = matrix((avg + plsEffects$y[2,]),3,nsplandmarks)
     
     # Transform sparse to dense
-    predmin = tps3d(mesh,t(sparse_lm),t(predminlm),lambda=lambda,threads=ncores)
-    predmax = tps3d(mesh,t(sparse_lm),t(predmaxlm),lambda=lambda,threads=ncores)
+    out = list()
+    out$predmin = tps3d(mesh,t(sparse_lm),t(predminlm),lambda=lambda,threads=ncores)
+    out$predmax = tps3d(mesh,t(sparse_lm),t(predmaxlm),lambda=lambda,threads=ncores)
   }
   
-  return(predmin,predmax)
+  return(out)
   
 }
