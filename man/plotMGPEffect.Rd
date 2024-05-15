@@ -11,7 +11,7 @@ plotMGPEffect(obj, comp, type, sdy, lambda, ncores)
 
 \item{comp}{Which PLS component to visualize (default = 1)}
 
-\item{type}{Type of plot (options: "max", "min", "overlay", "heatmap"; default = "max")}
+\item{type}{Type of plot (options: "max", "min", "overlay", "heatmap"; default = "none")}
 
 \item{sdy}{Standard deviation of the yscores. sdy=3 will show the effects of -3sd vs +3sd (default = 3)}
 

@@ -4,7 +4,7 @@
 #' 
 #' @param obj runHumanMGP object
 #' @param comp Which PLS component to visualize (default = 1)
-#' @param type Type of plot (options: "max", "min", "overlay", "heatmap"; default = "max")
+#' @param type Type of plot (options: "max", "min", "overlay", "heatmap"; default = "none")
 #' @param sdy Standard deviation of the yscores. sdy=3 will show the effects of -3sd vs +3sd (default = 3)
 #' @param lambda Regularization parameter of the TPS (only valid for sparse landmarks; default = 1e-8)
 #' @param ncores Number of CPU cores to be used for parallellization (default = 1)
@@ -34,6 +34,7 @@ plotMGPEffect <- function(obj, comp, type, sdy, lambda, ncores){
   if (comp > max_comp) {
     cat("\033[33m", paste("Maximum number of components is ", max_comp, sep = ""), "\033[0m", "\n")
     cat("\033[33m", "Plotting PLS1 instead", "\033[0m", "\n")
+    comp = 1
   }
   if (length(comp)>1){
     stop("Please only select one PLS component at a time")
