@@ -1,3 +1,7 @@
+plotMGPEffect = function(object){
+  UseMethod("plotMGPEffect")
+}
+
 plotMGPEffect.MGPobj <- function(object, comp, sdy, lambda, ncores){
   
   if (missing(comp)) { comp = 1 }
