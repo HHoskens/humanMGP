@@ -54,11 +54,12 @@ GOterm = c("SOX9", "PAX3", "ENSG00000125378")
 
 mgp.out = runHumanMGP(GOterm = GOterm, cohort = "3DFN", lm = "sparse", covs = c("age","sex"), window = 0, ncomp = 2, npc = 1, signif = F, nperm = 99, ncores = 10)
 
-test = plotMGPEffect(obj = mgp.out, comp=2, sdy = 10, lambda = 0, ncores=10)
+mgp.pheno = plotMGPEffect(obj = mgp.out, comp=1, sdy = 6, lambda = 0, ncores=10)
+mgp.pheno = plotMGPEffect(obj = mgp.out, comp=1, type = "min", sdy = 6, lambda = 0, ncores=10)
+mgp.pheno = plotMGPEffect(obj = mgp.out, comp=10, type = "max", sdy = 6, lambda = 0, ncores=10)
+mgp.pheno = plotMGPEffect(obj = mgp.out, comp=1, type = "heatmap", sdy = 6, lambda = 0, ncores=10)
+mgp.pheno = plotMGPEffect(obj = mgp.out, comp=1, type = "overlay", sdy = 6, lambda = 0, ncores=10)
 
-open3d(zoom = .65); 
-plot3d(test$predmin, col = adjustcolor("darkgrey", .3), alpha = .9, specular = 1, axes = F, box = F, xlab = "", ylab = "", zlab = "", main = "", aspect = "iso", add = F)
-view3d(theta=1, phi=5, fov=45)
 
 ```
 

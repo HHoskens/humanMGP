@@ -12,7 +12,6 @@
 #' @return 
 #' \item{predmax }{Predicted MGP effect at +sdy standard deviations from the mean}
 #' \item{predmin }{Predicted MGP effect at -sdy standard deviations from the mean}
-#' \item{p }{Shape viewer}
 #'
 #' @author Hanne Hoskens
 #' 
@@ -73,18 +72,18 @@ plotMGPEffect <- function(obj, comp, type, sdy, lambda, ncores){
     # skip
     
   } else if (type == "max"){
-    #open3d(zoom = .65); 
-    out$p = plot3d(out$predmax, col = adjustcolor("darkgrey", .3), alpha = .9, specular = 1, axes = F, box = F, xlab = "", ylab = "", zlab = "", main = "", aspect = "iso", add = F)
+    open3d(zoom = .65); 
+    plot3d(out$predmax, col = adjustcolor("darkgrey", .3), alpha = .9, specular = 1, axes = F, box = F, xlab = "", ylab = "", zlab = "", main = "", aspect = "iso", add = F)
     view3d(theta=1, phi=5, fov=45)
     
   } else if (type == "min"){
-    #open3d(zoom = .65); 
-    p = plot3d(out$predmin, col = adjustcolor("darkgrey", .3), alpha = .9, specular = 1, axes = F, box = F, xlab = "", ylab = "", zlab = "", main = "", aspect = "iso", add = F)
+    open3d(zoom = .65); 
+    plot3d(out$predmin, col = adjustcolor("darkgrey", .3), alpha = .9, specular = 1, axes = F, box = F, xlab = "", ylab = "", zlab = "", main = "", aspect = "iso", add = F)
     view3d(theta=1, phi=5, fov=45)
     
   } else if (type == "overlay"){
-    #open3d(zoom = .65); 
-    p = plot3d(out$predmin, col = "darkgrey", alpha = .7, specular = 1, axes = F, box = F, xlab = "", ylab = "", zlab = "", main = "", aspect = "iso", add = T)
+    open3d(zoom = .65); 
+    plot3d(out$predmin, col = "darkgrey", alpha = .7, specular = 1, axes = F, box = F, xlab = "", ylab = "", zlab = "", main = "", aspect = "iso", add = T)
     plot3d(out$predmax, col = "lightgrey", alpha = .7, specular = 1, axes = F, box = F, xlab = "", ylab = "", zlab = "", main = "", aspect = "iso", add = T, type = "wire")
     view3d(theta=98, phi=-5, fov=45)
     
@@ -94,7 +93,7 @@ plotMGPEffect <- function(obj, comp, type, sdy, lambda, ncores){
     tmpdist = meshDist(avg, out$predmax, plot = F)
     
     open3d(zoom = .65)
-    p = meshDist(avg, out$predmax, rampcolors = coolwarm(5), plot = T, steps = 100, scaleramp = T, from = -max(abs(tmpdist$dists)), to = max(abs(tmpdist$dists)))
+    meshDist(avg, out$predmax, rampcolors = coolwarm(5), plot = T, steps = 100, scaleramp = T, from = -max(abs(tmpdist$dists)), to = max(abs(tmpdist$dists)))
     view3d(theta=1, phi=5, fov=45)
   }
   
