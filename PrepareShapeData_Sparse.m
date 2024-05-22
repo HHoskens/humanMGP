@@ -95,13 +95,15 @@ fam3DFN.Properties.VariableNames(1:2) = {'FID','IID'}; fam3DFN.FID = cellstr(num
 %% Match Pheno and Geno data
 idx1 = ismember(covs.Dataset,'Pittsburgh'); tabulate(idx1)
 idx2 = ismember(covs.IID,fam3DFN.IID); tabulate(idx2)
+% Remove duplicates
+idx3 = ismember(covs.Method,'Harry'); tabulate(idx3)
 
-idx = idx1 & idx2;
+idx = idx1 & idx2 & idx3;
 
 % Reduce
 lm3DFN = lms(:,:,idx);
 cov3DFN = covs(idx,:);
-n3DFN = sum(idx);% 4559
+n3DFN = sum(idx);% 2343
 
 %% Align and Symmetrize data
 left =[40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65];
@@ -124,12 +126,29 @@ sym3DFN = (orig+refl)/2;
 % Add centroid size
 cov3DFN.CSize = csize3DFN(1:n3DFN)';
 
-% Quick check
+%% Quick check
+data = permute(sym3DFN,[2 1 3]);
+data = reshape(data,sAtlas.nVertices*3,size(sym3DFN,3));
+
+space = shapePCA;
+space.RefScan = clone(sAtlas);
+getAverage(space,data);
+getModel(space,data);
+space.stripPercVar(98)
+
+% get z-scores 
+outM = sqrt(sum(((space.Tcoeff-repmat(space.AvgCoeff',space.n,1))./repmat(space.EigStd',space.n,1)).^2,2))';
+zM = (outM-mean(outM))/std(outM);
+
+OutlierIndex = find(abs(zM)>3);
+cprintf([0 0 1],[num2str(length(OutlierIndex)) ' outliers were detected\n'])
+
+% Manual check of outliers
 scan = shape3D; v = viewer(scan); v.SceneLightVisible = true;
-for i=1:nID, scan.Vertices = sym3DFN(:,:,i); scan.VertexSize = 20; scan.Visible = true; pause; end
+for i=1:length(OutlierIndex), scan.Vertices = sym3DFN(:,:,OutlierIndex(i)); scan.VertexSize = 20; scan.Visible = true; pause; end
 
 %% Export
-% writetable(cov3DFN,[studyPath 'Data/COV_3DFN.csv'],'Delimiter',',');
+% writetable(cov3DFN,[studyPath 'Data/COV_3DFN_sparse.csv'],'Delimiter',',');
 % 
 % sym = permute(sym3DFN,[2 1 3]);
 % sym = reshape(sym,3*sAtlas.nVertices,n3DFN);
@@ -137,7 +156,7 @@ for i=1:nID, scan.Vertices = sym3DFN(:,:,i); scan.VertexSize = 20; scan.Visible 
 % % add IDs
 % sym = [cov3DFN.IID sym];
 % 
-% writecell(sym,[studyPath 'Data/LM_3DFN.csv'],'Delimiter',',');
+% writecell(sym,[studyPath 'Data/LM_3DFN_sparse.csv'],'Delimiter',',');
 
 %% 
 % === TANZANIA ===
@@ -145,13 +164,15 @@ for i=1:nID, scan.Vertices = sym3DFN(:,:,i); scan.VertexSize = 20; scan.Visible 
 %% Match Pheno and Geno data
 idx1 = ismember(covs.Dataset,'Tanzania'); tabulate(idx1)
 idx2 = ismember(covs.IID,famTANZ.IID); tabulate(idx2)
+% Remove duplicates
+idx3 = ismember(covs.Method,'Harry'); tabulate(idx3)
 
-idx = idx1 & idx2;
+idx = idx1 & idx2 & idx3;
 
 % Reduce
 lmTANZ = lms(:,:,idx);
 covTANZ = covs(idx,:);
-nTANZ = sum(idx);% 6967
+nTANZ = sum(idx);% 3478
 
 %% Align and Symmetrize data
 left =[40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65];
@@ -174,9 +195,27 @@ symTANZ = (orig+refl)/2;
 % Add centroid size
 covTANZ.CSize = csizeTANZ(1:nTANZ)';
 
-% Quick check
+%% Quick check
+data = permute(symTANZ,[2 1 3]);
+data = reshape(data,sAtlas.nVertices*3,size(symTANZ,3));
+
+space = shapePCA;
+space.RefScan = clone(sAtlas);
+getAverage(space,data);
+getModel(space,data);
+space.stripPercVar(98)
+
+% get z-scores 
+outM = sqrt(sum(((space.Tcoeff-repmat(space.AvgCoeff',space.n,1))./repmat(space.EigStd',space.n,1)).^2,2))';
+zM = (outM-mean(outM))/std(outM);
+
+OutlierIndex = find(abs(zM)>3);
+cprintf([0 0 1],[num2str(length(OutlierIndex)) ' outliers were detected\n'])
+
+% Manual check of outliers
 scan = shape3D; v = viewer(scan); v.SceneLightVisible = true;
-for i=1:nTANZ, scan.Vertices = symTANZ(:,:,i); scan.VertexSize = 20; scan.Visible = true; pause; end
+for i=1:length(OutlierIndex), scan.Vertices = symTANZ(:,:,OutlierIndex(i)); scan.VertexSize = 20; scan.Visible = true; pause; end
+
 
 %% Export
 % writetable(covTANZ,[studyPath 'Data/COV_TANZ.csv'],'Delimiter',',');

@@ -66,29 +66,30 @@ runHumanMGP <- function(GOterm,cohort,lm,covs,window,ncomp,npc,signif,nperm,ncor
   loadpath1 = "/mnt/BHServer4/FaceBase_3/Analysis/HumanMGP/Data/"
   loadpath2 = "/mnt/BHServer4/FaceBase_3/Data/Genetics/"
   
-  # Phenotypes
-  if (lm == "sparse"){
-    tmp = read.csv(paste(loadpath1,"LM_",cohort,".csv",sep=""), header = F, sep = ",")
-    pheno.id = as.character(tmp[,1])
-    pheno.coeff = as.matrix(tmp[,2:dim(tmp)[2]]); colnames(tmp) <- NULL
-    pheno.avg = colMeans(pheno.coeff)
-      
-  } else if (lm == "dense"){
-    #tmp = read.csv(paste(loadpath,tolower(cohort),"_pca_coeff.csv",sep=""), header = F, sep = ",")
+  # Phenotypes + covariates
+  # sparse: pheno.id, pheno.coeff, pheno.avg, meta.cov
+  # dense: pheno.id, pheno.coeff, pheno.avg, meta.cov, pca.eigvec, pca.eigstd
+  load(paste("/mnt/BHServer4/FaceBase_3/Analysis/HumanMGP/Data/",toupper(lm),"DATA_",cohort,".RData",sep=""))
+
+  #if (lm == "sparse"){
+    #tmp = read.csv(paste(loadpath1,"LM_",cohort,"_",lm,".csv",sep=""), header = F, sep = ",")
     #pheno.id = as.character(tmp[,1])
     #pheno.coeff = as.matrix(tmp[,2:dim(tmp)[2]]); colnames(tmp) <- NULL
-    #  
-    #pca.eigvec = read.csv(paste(loadpath,tolower(cohort),"_pca_eigvec.csv",sep=""), header = F, sep = ","); pca.eigvec = as.matrix(pca.eigvec)
-    #pca.eigstd = read.csv(paste(loadpath,tolower(cohort),"_pca_eigstd.csv",sep=""), header = F, sep = ","); pca.eigstd = as.matrix(pca.eigstd)
-    #pheno.avg = read.csv(paste(loadpath,tolower(cohort),"_avg.csv",sep=""), header = F, sep = ","); pheno.avg = as.matrix(pheno.avg)
-  }
+    #pheno.avg = colMeans(pheno.coeff); pheno.avg = as.matrix(t(pheno.avg))
+    #meta.cov = read.csv(paste(loadpath1,"COV_",cohort,"_",lm,".csv",sep=""), header = T, sep = ",")
+  #} else if (lm == "dense"){
+    #tmp = read.csv(paste(loadpath1,"PC_",cohort,"_",tolower(lm),".csv",sep=""), header = F, sep = ",")
+    #pheno.id = as.character(tmp[,1])
+    #pheno.coeff = as.matrix(tmp[,2:dim(tmp)[2]]); colnames(tmp) <- NULL
+    #pca.eigvec = read.csv(paste(loadpath1,"EIGVEC_",cohort,"_",tolower(lm),".csv",sep=""), header = F, sep = ","); pca.eigvec = as.matrix(pca.eigvec)
+    #pca.eigstd = read.csv(paste(loadpath1,"EIGVAL_",cohort,"_",tolower(lm),".csv",sep = ""), header = F, sep = ","); pca.eigstd = as.matrix(pca.eigstd)
+    #pheno.avg = read.csv(paste(loadpath1,"AVG_",cohort,"_",tolower(lm),".csv",sep = ""), header = F, sep = ","); pheno.avg = as.matrix(pheno.avg)
+    #meta.cov = read.csv(paste(loadpath1,"COV_",cohort,"_",lm,".csv",sep=""), header = T, sep = ",")
+  #}
 
-  nsplandmarks = 65
-  nlandmarks = 2565
+  nlandmarks = 5629
+  if (lm == "sparse"){ nsplandmarks = 65; nlandmarks = 2565 }
   
-  # Covariates
-  meta.cov = read.csv(paste(loadpath1,"COV_",cohort,".csv",sep=""), header = T, sep = ",")
-
   # Genotypes
   if (cohort == "3DFN"){ 
     bfile = paste(loadpath2,"Pitt/QC/Prune/Marazita_imputed_qc_prune_rmrel",sep="") 
@@ -137,7 +138,8 @@ runHumanMGP <- function(GOterm,cohort,lm,covs,window,ncomp,npc,signif,nperm,ncor
     mod = procD.lm(f1, data = df, RRPP = T, iter = 99, Parallel = ncores)
 
     # Get residuals
-    pheno.coeff.adj = mod$residuals + matrix(data=pheno.avg,nrow=nrow(pheno.coeff),ncol=ncol(pheno.coeff),byrow = T)
+    #pheno.coeff.adj = mod$residuals + matrix(data=pheno.avg,nrow=nrow(pheno.coeff),ncol=ncol(pheno.coeff),byrow = T)
+    pheno.coeff.adj = mod$residuals + matrix(data=colMeans(df$Shape),nrow=nrow(pheno.coeff),ncol=ncol(pheno.coeff),byrow = T)
     pheno.avg.adj = colMeans(pheno.coeff.adj)
   }
 
@@ -508,8 +510,11 @@ runHumanMGP <- function(GOterm,cohort,lm,covs,window,ncomp,npc,signif,nperm,ncor
       if (i==1){ predavg = tps3d(mesh,t(sparse_lm),t(matrix(pheno.avg.adj,3,nsplandmarks)),threads=ncores)$vb[1:3,] }
       
     } else if (lm == "dense"){
-      #predmin[,,i] = pheno.avg.adj + t(row2array3d(t(pca.eigvec %*% plsEffects$y[1,]), Nlandmarks = nlandmarks)[,,1])
-      #predmax[,,i] = pheno.avg.adj + t(row2array3d(t(pca.eigvec %*% plsEffects$y[2,]), Nlandmarks = nlandmarks)[,,1])
+      mesh = Morpho::file2mesh("/mnt/BHServer4/FaceBase_3/Data/Images/Atlas/Dense_5k/dense_5k_atlas.ply")
+      avg = t(row2array3d(pheno.avg,Nlandmarks = nlandmarks)[,,1])
+      predmin[,,i] = avg + t(row2array3d(t(pca.eigvec %*% plsEffects$y[1,]), Nlandmarks = nlandmarks)[,,1])
+      predmax[,,i] = avg + t(row2array3d(t(pca.eigvec %*% plsEffects$y[2,]), Nlandmarks = nlandmarks)[,,1])
+      if (i==1) { predavg = avg }
     }
   }
   dimnames(predmin)[[1]] <- c("x","y","z");   dimnames(predmin)[[2]] <- paste("LM",1:nlandmarks, sep = "");   dimnames(predmin)[[3]] <- paste("PLS",1:ncomp, sep = "")
