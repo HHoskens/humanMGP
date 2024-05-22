@@ -55,9 +55,9 @@ runHumanMGP <- function(GOterm,cohort,lm,covs,window,ncomp,npc,signif,nperm,ncor
   if (missing(nperm)) { nperm = 99 }
   if (missing(ncores)) { ncores = 1 }
 
-  if (lm == "dense") {
-    stop("Dense landmark scheme is not yet supported. Please use 'sparse' instead.")
-  }
+  #if (lm == "dense") {
+  #  stop("Dense landmark scheme is not yet supported. Please use 'sparse' instead.")
+  #}
   
 
   
