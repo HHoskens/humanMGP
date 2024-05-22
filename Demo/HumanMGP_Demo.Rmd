@@ -50,7 +50,7 @@ GOterm = "chondrocyte differentiation"
 GOterm = "GO:0033574"
 GOterm = c("SOX9", "PAX3", "ENSG00000125378")
 
-mgp.out = runHumanMGP(GOterm = GOterm, cohort = "TANZ", lm = "sparse", covs = c("age","sex"), window = 0, ncomp = 2, npc = 1, signif = F, nperm = 99, ncores = 10)
+mgp.out = runHumanMGP(GOterm = GOterm, cohort = "3DFN", lm = "sparse", covs = c("age","sex"), window = 0, ncomp = 2, npc = 1, signif = F, nperm = 99, ncores = 10)
 
 ```
 
@@ -59,10 +59,10 @@ mgp.out = runHumanMGP(GOterm = GOterm, cohort = "TANZ", lm = "sparse", covs = c(
 ## Pheno
 see ?plotMGPEffect for a description of the input arguments
 ```{r}
-mgp.pheno = plotMGPEffect(obj = mgp.out, comp=1, type = "min", sdy = 2, lambda = 5, ncores=10)
-mgp.pheno = plotMGPEffect(obj = mgp.out, comp=10, type = "max", sdy = 6, lambda = 50, ncores=10)
-mgp.pheno = plotMGPEffect(obj = mgp.out, comp=2, type = "heatmap", sdy = 6, lambda =1e-8, ncores=10)
-mgp.pheno = plotMGPEffect(obj = mgp.out, comp=2, type = "overlay", sdy = 5, lambda = 1, ncores=10)
+mgp.pheno = plotMGPEffect(obj = mgp.out, comp=1, type = "min", sdy = 10, lambda = 0, ncores=10)
+mgp.pheno = plotMGPEffect(obj = mgp.out, comp=10, type = "max", sdy = 6, lambda = 0, ncores=10)
+mgp.pheno = plotMGPEffect(obj = mgp.out, comp=1, type = "heatmap", sdy = 2, lambda =1e-8, ncores=10)
+mgp.pheno = plotMGPEffect(obj = mgp.out, comp=1, type = "overlay", sdy = 10, lambda = 1, ncores=10)
 
 ```
 
