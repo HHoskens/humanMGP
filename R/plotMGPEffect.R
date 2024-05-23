@@ -64,7 +64,7 @@ plotMGPEffect <- function(obj, comp, type, sdy, lambda, ncores){
   } else if (obj$ShapeType == "dense") { 
     mesh = Morpho::file2mesh("/mnt/BHServer4/FaceBase_3/Data/Images/Atlas/Dense_5k/dense_5k_atlas.ply")
     nlm = dim(mesh$vb)[2]
-    load(paste("/mnt/BHServer4/FaceBase_3/Analysis/HumanMGP/Data/",toupper(obj$ShapeType),"DATA_",toupper(obj$Cohort),".RData",sep=""))
+    load(paste("/mnt/BHServer4/FaceBase_3/Analysis/HumanMGP/Data/",toupper(obj$ShapeType),"PCA_",toupper(obj$Cohort),".RData",sep=""))
     
     avg = row2array3d(pheno.avg, Nlandmarks = nlm)[,,1]
     
