@@ -39,16 +39,11 @@ plotMGPEffect <- function(obj, comp, type, sdy, lambda, ncores){
     comp = 1
   }
   
-  
-  #nlandmarks = 
-  nsplandmarks = 65
-  
-  
-  
-  nlm = dim(obj$PLS$y)[2]
 
+  
+  
   # Sparse
-  if (nlm == 3*nsplandmarks) { 
+  if (obj$ShapeType == "sparse") { 
     mesh = Morpho::file2mesh("/mnt/BHServer4/FaceBase_3/Data/Images/Atlas/Dense_2k_ears/dense_2k_ears_atlas.ply")
     ind_sparse = read.csv('/mnt/BHServer4/FaceBase_3/Data/Images/Atlas/Dense_2k_ears/sparse_65_ind.txt',header=F);
     sparse_lm = mesh$vb[1:3,as.matrix(ind_sparse)]
@@ -63,8 +58,26 @@ plotMGPEffect <- function(obj, comp, type, sdy, lambda, ncores){
     out = list()
     out$predmin = tps3d(mesh,t(sparse_lm),t(predminlm),lambda=lambda,threads=ncores)
     out$predmax = tps3d(mesh,t(sparse_lm),t(predmaxlm),lambda=lambda,threads=ncores)
-  }
+  
+    
   # Dense
+  } else if (obj$ShapeType == "dense") { 
+    mesh = Morpho::file2mesh("/mnt/BHServer4/FaceBase_3/Data/Images/Atlas/Dense_5k/dense_5k_atlas.ply")
+    nlm = dim(mesh$vb)[2]
+    load(paste("/mnt/BHServer4/FaceBase_3/Analysis/HumanMGP/Data/",toupper(obj$ShapeType),"DATA_",toupper(obj$Cohort),".RData",sep=""))
+    
+    avg = row2array3d(pheno.avg, Nlandmarks = nlm)[,,1]
+    
+    plsEffects = plsCoVar(obj$PLS, i=comp, sdy=sdy)
+    predminlm = avg + row2array3d(t(pca.eigvec %*% plsEffects$y[1,]), Nlandmarks = nlm)[,,1]
+    predmaxlm = avg + row2array3d(t(pca.eigvec %*% plsEffects$y[2,]), Nlandmarks = nlm)[,,1]
+    
+    # Save mesh
+    out = list()
+    out$predmin = mesh; out$predmin$vb[1:3,] = t(predminlm)
+    out$predmax = mesh; out$predmax$vb[1:3,] = t(predmaxlm)
+  }
+  
   
   
   # Generate shape viewer
