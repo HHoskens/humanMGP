@@ -350,7 +350,7 @@ runHumanMGP <- function(GOterm,cohort,lm,covs,window,ncomp,npc,signif,nperm,ncor
     if (npc == "all"){
       # Parallel analysis (only needed if more than 1 SNP is defined within gene)
       if (sum(ind)>1){
-        tmp.pca.pa = paran(geno.bed[,ind], quietly = T, status = F, all = T, iterations = 1000, centile = 95)
+        tmp.pca.pa = paran(geno.bed[,ind], quietly = T, status = F, all = T, iterations = 50, centile = 5)
         pc_axis = which(tmp.pca.pa$Ev>tmp.pca.pa$RndEv)
         n = length(pc_axis)
         if (n==0){ pc_axis = 1; n = 1 }
