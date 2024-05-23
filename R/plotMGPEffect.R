@@ -48,11 +48,15 @@ plotMGPEffect <- function(obj, comp, type, sdy, lambda, ncores){
     ind_sparse = read.csv('/mnt/BHServer4/FaceBase_3/Data/Images/Atlas/Dense_2k_ears/sparse_65_ind.txt',header=F);
     sparse_lm = mesh$vb[1:3,as.matrix(ind_sparse)]
     
+    nlm = dim(mesh$vb)[2]
+    nsplm = length(ind_sparse)
+    
+    
     avg = colMeans(obj$PLS$y)
     
     plsEffects = plsCoVar(obj$PLS, i=comp, sdy=sdy)
-    predminlm = matrix((avg + plsEffects$y[1,]),3,nsplandmarks)
-    predmaxlm = matrix((avg + plsEffects$y[2,]),3,nsplandmarks)
+    predminlm = matrix((avg + plsEffects$y[1,]),3,nsplm)
+    predmaxlm = matrix((avg + plsEffects$y[2,]),3,nsplm)
     
     # Transform sparse to dense
     out = list()
