@@ -3,6 +3,8 @@
 #' Performs a two-block PLS on sets of genetic and shape variables based on "pls2B" from the Morpho package.
 #' The goal is to find pairs of latent variables that show maximal covariation with a set of genetic markers.
 #' 
+#' Note: mount Storage4 as "/mnt/BHServer4/"
+#' 
 #' @param GOterm GO term (name or ID) or gene list (names or ensembl ID) of interest
 #' @param cohort Cohort to be analyzed ("3DFN" or "TANZ")
 #' @param lm Sparse or dense landmarking scheme to be used ("sparse" or "dense"; default = sparse)
@@ -56,21 +58,19 @@ runHumanMGP <- function(GOterm,cohort,lm,covs,window,ncomp,npc,signif,nperm,ncor
   if (missing(nperm)) { nperm = 99 }
   if (missing(ncores)) { ncores = 1 }
 
-  #if (lm == "dense") {
-  #  stop("Dense landmark scheme is not yet supported. Please use 'sparse' instead.")
-  #}
   
 
   
   ## LOAD DATA ####
   cat("\033[32m", "STEP 1: LOADING PHENOTYPES", "\033[0m", "\n")
-  loadpath1 = "/mnt/BHServer4/FaceBase_3/Analysis/HumanMGP/Data/"
-  loadpath2 = "/mnt/BHServer4/FaceBase_3/Data/Genetics/"
+  mntpath = "/mnt/BHServer4/"
+  loadpath1 = paste(mntpath,"FaceBase_3/Analysis/HumanMGP/Data/",sep="")
+  loadpath2 = paste(mntpath,"FaceBase_3/Data/Genetics/",sep="")
   
   # Phenotypes + covariates
   # sparse: pheno.id, pheno.coeff, pheno.avg, meta.cov
   # dense: pheno.id, pheno.coeff, pheno.avg, meta.cov, pca.eigvec, pca.eigstd
-  load(paste("/mnt/BHServer4/FaceBase_3/Analysis/HumanMGP/Data/",toupper(lm),"DATA_",cohort,".RData",sep=""))
+  load(paste(loadpath1,toupper(lm),"DATA_",cohort,".RData",sep=""))
 
   #if (lm == "sparse"){
     #tmp = read.csv(paste(loadpath1,"LM_",cohort,"_",lm,".csv",sep=""), header = F, sep = ",")
@@ -266,7 +266,7 @@ runHumanMGP <- function(GOterm,cohort,lm,covs,window,ncomp,npc,signif,nperm,ncor
   
   
   ## REDUCE GENOTYPES IN PLINK #### 
-  plink_path = "/mnt/BHServer4/FaceBase_3/Analysis/HumanMGP/Plink/plink" 
+  plink_path = paste(mntpath,"FaceBase_3/Analysis/HumanMGP/Plink/plink",sep="")
   tmp_path = paste(path.expand("~"),"tmp_mgp/",sep = "/") 
   if (!dir.exists(tmp_path)){ dir.create(tmp_path) }
   
@@ -500,8 +500,8 @@ runHumanMGP <- function(GOterm,cohort,lm,covs,window,ncomp,npc,signif,nperm,ncor
   for (i in 1:ncomp){
     plsEffects = plsCoVar(mgp.pls, i=i, sdy=6)
     if (lm == "sparse"){
-      mesh = Morpho::file2mesh("/mnt/BHServer4/FaceBase_3/Data/Images/Atlas/Dense_2k_ears/dense_2k_ears_atlas.ply")
-      ind_sparse = read.csv('/mnt/BHServer4/FaceBase_3/Data/Images/Atlas/Dense_2k_ears/sparse_65_ind.txt',header=F);
+      mesh = Morpho::file2mesh(paste(mntpath,"FaceBase_3/Data/Images/Atlas/Dense_2k_ears/dense_2k_ears_atlas.ply",sep=""))
+      ind_sparse = read.csv(paste(mntpath,"FaceBase_3/Data/Images/Atlas/Dense_2k_ears/sparse_65_ind.txt",sep=""),header=F);
       sparse_lm = mesh$vb[1:3,as.matrix(ind_sparse)]
       
       predminlm = matrix((pheno.avg.adj + plsEffects$y[1,]),3,nsplandmarks)
@@ -511,7 +511,7 @@ runHumanMGP <- function(GOterm,cohort,lm,covs,window,ncomp,npc,signif,nperm,ncor
       if (i==1){ predavg = tps3d(mesh,t(sparse_lm),t(matrix(pheno.avg.adj,3,nsplandmarks)),threads=ncores)$vb[1:3,] }
       
     } else if (lm == "dense"){
-      mesh = Morpho::file2mesh("/mnt/BHServer4/FaceBase_3/Data/Images/Atlas/Dense_5k/dense_5k_atlas.ply")
+      mesh = Morpho::file2mesh(paste(mntpath,"FaceBase_3/Data/Images/Atlas/Dense_5k/dense_5k_atlas.ply",sep=""))
       avg = t(row2array3d(pheno.avg,Nlandmarks = nlandmarks)[,,1])
       predmin[,,i] = avg + t(row2array3d(t(pca.eigvec %*% plsEffects$y[1,]), Nlandmarks = nlandmarks)[,,1])
       predmax[,,i] = avg + t(row2array3d(t(pca.eigvec %*% plsEffects$y[2,]), Nlandmarks = nlandmarks)[,,1])
