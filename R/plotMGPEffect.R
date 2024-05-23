@@ -40,16 +40,17 @@ plotMGPEffect <- function(obj, comp, type, sdy, lambda, ncores){
   }
   
 
+  mntpath = '/mnt/BHServer4/'
   
   
   # Sparse
   if (obj$ShapeType == "sparse") { 
-    mesh = Morpho::file2mesh("/mnt/BHServer4/FaceBase_3/Data/Images/Atlas/Dense_2k_ears/dense_2k_ears_atlas.ply")
-    ind_sparse = read.csv('/mnt/BHServer4/FaceBase_3/Data/Images/Atlas/Dense_2k_ears/sparse_65_ind.txt',header=F);
+    mesh = Morpho::file2mesh(paste(mntpath,"FaceBase_3/Data/Images/Atlas/Dense_2k_ears/dense_2k_ears_atlas.ply",sep=""))
+    ind_sparse = read.csv(paste(mntpath,'FaceBase_3/Data/Images/Atlas/Dense_2k_ears/sparse_65_ind.txt',sep=""),header=F);
     sparse_lm = mesh$vb[1:3,as.matrix(ind_sparse)]
     
     nlm = dim(mesh$vb)[2]
-    nsplm = length(ind_sparse)
+    nsplm = dim(ind_sparse)[1]
     
     
     avg = colMeans(obj$PLS$y)
@@ -66,9 +67,9 @@ plotMGPEffect <- function(obj, comp, type, sdy, lambda, ncores){
     
   # Dense
   } else if (obj$ShapeType == "dense") { 
-    mesh = Morpho::file2mesh("/mnt/BHServer4/FaceBase_3/Data/Images/Atlas/Dense_5k/dense_5k_atlas.ply")
+    mesh = Morpho::file2mesh(paste(mntpath,"FaceBase_3/Data/Images/Atlas/Dense_5k/dense_5k_atlas.ply",sep=""))
     nlm = dim(mesh$vb)[2]
-    load(paste("/mnt/BHServer4/FaceBase_3/Analysis/HumanMGP/Data/",toupper(obj$ShapeType),"PCA_",toupper(obj$Cohort),".RData",sep=""))
+    load(paste(mntpath,"FaceBase_3/Analysis/HumanMGP/Data/",toupper(obj$ShapeType),"PCA_",toupper(obj$Cohort),".RData",sep=""))
     
     avg = row2array3d(pheno.avg, Nlandmarks = nlm)[,,1]
     
