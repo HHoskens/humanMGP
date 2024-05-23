@@ -22,6 +22,7 @@
 #' \item{ShapeEffectMax }{Matrix (3xnLMxncomp) containing the shape effects associated with each PLS component}
 #' \item{ShapeEffectMin }{Matrix (3xnLMxncomp) containing the "inverse" shape effects associated with each PLS component}
 #' \item{ShapeAverage }{Matrix (3xnLM) containing the mean shape of the specified cohort}
+#' \item{ShapeType }{sparse or dense landmarking scheme; required for plotting functions}
 #' \item{SV }{Singular values (covariance) per pair of PLS axes; plus significance}
 #' \item{R2 }{Shape variance explained per PLS component; plus significance}
 #' \item{PD }{Procrustes Distance between mean shape and MGP effect; plus significance}
@@ -485,7 +486,7 @@ runHumanMGP <- function(GOterm,cohort,lm,covs,window,ncomp,npc,signif,nperm,ncor
 
   # PLS summary
   out$PLS = mgp.pls
-  
+
   # Geno
   XL = as.matrix(mgp.pls$svd$u[,1:ncomp])
   rownames(XL) = gene.id
@@ -524,6 +525,7 @@ runHumanMGP <- function(GOterm,cohort,lm,covs,window,ncomp,npc,signif,nperm,ncor
   out$ShapeEffectMax = predmax
   out$ShapeEffectMin = predmin
   out$ShapeAverage = predavg
+  out$ShapeType = lm
   
   # Measures of effect size
   mgp.sv = matrix(mgp.sv,nrow=1,ncol=ncomp,byrow=T)
