@@ -2,12 +2,11 @@
 #' 
 #' Performs a two-block PLS on sets of genetic and shape variables based on "pls2B" from the Morpho package.
 #' The goal is to find pairs of latent variables that show maximal covariation with a set of genetic markers.
-#' 
 #' Note: mount Storage4 as "/mnt/BHServer4/"
 #' 
 #' @param GOterm GO term (name or ID) or gene list (names or ensembl ID) of interest
 #' @param cohort Cohort to be analyzed ("3DFN" or "TANZ")
-#' @param pls Perform 2B-PLS on covariance or correlation matrix ("cov" or "cor"; default = "cor"). 
+#' @param pls Perform 2B-PLS on covariance or correlation matrix ("cov" or "cor"; default = "cor")
 #' @param lm Sparse or dense landmarking scheme to be used ("sparse" or "dense"; default = "dense")
 #' @param covs List of covariates to standardize for (options: "none", "age", "age2", "age3", "sex", "height", "weight", "csize")
 #' @param window Search window (in kb) around transcription start and end sites (default = 0kb)
@@ -33,7 +32,7 @@
 #' @author Hanne Hoskens
 #' 
 #' @export
-runHumanMGP <- function(GOterm,cohort,lm,covs,window,ncomp,npc,signif,nperm,ncores){
+runHumanMGP <- function(GOterm,cohort,pls,lm,covs,window,ncomp,npc,signif,nperm,ncores){
   
   ## SPECIFY INPUT VARIABLES ####
   #  Required

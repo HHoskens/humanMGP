@@ -50,7 +50,7 @@ GOterm = "chondrocyte differentiation"
 GOterm = "GO:0033574"
 GOterm = c("SOX9", "PAX3", "ENSG00000125378")
 
-mgp.out = runHumanMGP(GOterm = GOterm, cohort = "3DFN", lm = "sparse", covs = c("age","sex","height","weight","csize"), window = 0, ncomp = 2, npc = 1, signif = F, nperm = 99, ncores = 10)
+mgp.out = runHumanMGP(GOterm = GOterm, cohort = "3DFN", pls = "cov", lm = "sparse", covs = c("age","sex","height","weight","csize"), window = 0, ncomp = 2, npc = 1, signif = F, nperm = 99, ncores = 10)
 
 ```
 

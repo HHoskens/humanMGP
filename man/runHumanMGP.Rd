@@ -7,6 +7,7 @@
 runHumanMGP(
   GOterm,
   cohort,
+  pls,
   lm,
   covs,
   window,
@@ -21,6 +22,8 @@ runHumanMGP(
 \item{GOterm}{GO term (name or ID) or gene list (names or ensembl ID) of interest}
 
 \item{cohort}{Cohort to be analyzed ("3DFN" or "TANZ")}
+
+\item{pls}{Perform 2B-PLS on covariance or correlation matrix ("cov" or "cor"; default = "cor")}
 
 \item{lm}{Sparse or dense landmarking scheme to be used ("sparse" or "dense"; default = "dense")}
 
@@ -37,8 +40,6 @@ runHumanMGP(
 \item{nperm}{Number of permutations for significance testing (default = 99)}
 
 \item{ncores}{Number of CPU cores to be used for parallellization (default = 1)}
-
-\item{pls}{Perform 2B-PLS on covariance or correlation matrix ("cov" or "cor"; default = "cor").}
 }
 \value{
 \item{GOterm }{Search term}
@@ -56,8 +57,6 @@ runHumanMGP(
 \description{
 Performs a two-block PLS on sets of genetic and shape variables based on "pls2B" from the Morpho package.
 The goal is to find pairs of latent variables that show maximal covariation with a set of genetic markers.
-}
-\details{
 Note: mount Storage4 as "/mnt/BHServer4/"
 }
 \author{
