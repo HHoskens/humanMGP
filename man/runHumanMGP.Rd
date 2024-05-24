@@ -22,7 +22,7 @@ runHumanMGP(
 
 \item{cohort}{Cohort to be analyzed ("3DFN" or "TANZ")}
 
-\item{lm}{Sparse or dense landmarking scheme to be used ("sparse" or "dense"; default = sparse)}
+\item{lm}{Sparse or dense landmarking scheme to be used ("sparse" or "dense"; default = "dense")}
 
 \item{covs}{List of covariates to standardize for (options: "none", "age", "age2", "age3", "sex", "height", "weight", "csize")}
 
@@ -37,6 +37,8 @@ runHumanMGP(
 \item{nperm}{Number of permutations for significance testing (default = 99)}
 
 \item{ncores}{Number of CPU cores to be used for parallellization (default = 1)}
+
+\item{pls}{Perform 2B-PLS on covariance or correlation matrix ("cov" or "cor"; default = "cor").}
 }
 \value{
 \item{GOterm }{Search term}
@@ -46,6 +48,7 @@ runHumanMGP(
 \item{ShapeEffectMax }{Matrix (3xnLMxncomp) containing the shape effects associated with each PLS component}
 \item{ShapeEffectMin }{Matrix (3xnLMxncomp) containing the "inverse" shape effects associated with each PLS component}
 \item{ShapeAverage }{Matrix (3xnLM) containing the mean shape of the specified cohort}
+\item{ShapeType }{sparse or dense landmarking scheme; required for plotting functions}
 \item{SV }{Singular values (covariance) per pair of PLS axes; plus significance}
 \item{R2 }{Shape variance explained per PLS component; plus significance}
 \item{PD }{Procrustes Distance between mean shape and MGP effect; plus significance}
@@ -53,6 +56,9 @@ runHumanMGP(
 \description{
 Performs a two-block PLS on sets of genetic and shape variables based on "pls2B" from the Morpho package.
 The goal is to find pairs of latent variables that show maximal covariation with a set of genetic markers.
+}
+\details{
+Note: mount Storage4 as "/mnt/BHServer4/"
 }
 \author{
 Hanne Hoskens

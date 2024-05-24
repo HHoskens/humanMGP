@@ -7,7 +7,8 @@
 #' 
 #' @param GOterm GO term (name or ID) or gene list (names or ensembl ID) of interest
 #' @param cohort Cohort to be analyzed ("3DFN" or "TANZ")
-#' @param lm Sparse or dense landmarking scheme to be used ("sparse" or "dense"; default = sparse)
+#' @param pls Perform 2B-PLS on covariance or correlation matrix ("cov" or "cor"; default = "cor"). 
+#' @param lm Sparse or dense landmarking scheme to be used ("sparse" or "dense"; default = "dense")
 #' @param covs List of covariates to standardize for (options: "none", "age", "age2", "age3", "sex", "height", "weight", "csize")
 #' @param window Search window (in kb) around transcription start and end sites (default = 0kb)
 #' @param ncomp Number of PLS components to consider (default = 1)
@@ -49,7 +50,8 @@ runHumanMGP <- function(GOterm,cohort,lm,covs,window,ncomp,npc,signif,nperm,ncor
   }
 
   #  Optional
-  if (missing(lm)) { lm = "sparse" }
+  if (missing(pls)) { pls = "cor" }
+  if (missing(lm)) { lm = "dense" }
   if (missing(covs)) { covs = "none" }
   if (missing(window)) { window = 0e3 }
   if (missing(ncomp)) { ncomp = 1 }
@@ -62,7 +64,7 @@ runHumanMGP <- function(GOterm,cohort,lm,covs,window,ncomp,npc,signif,nperm,ncor
 
   
   ## LOAD DATA ####
-  cat("\033[32m", "STEP 1: LOADING PHENOTYPES", "\033[0m", "\n")
+  cat("\033[33m", "= Load Phenotypes", "\033[0m", "\n")
   mntpath = "/mnt/BHServer4/"
   loadpath1 = paste(mntpath,"FaceBase_3/Analysis/HumanMGP/Data/",sep="")
   loadpath2 = paste(mntpath,"FaceBase_3/Data/Genetics/",sep="")
@@ -105,7 +107,7 @@ runHumanMGP <- function(GOterm,cohort,lm,covs,window,ncomp,npc,signif,nperm,ncor
   
   
   ## COVARIATE ADJUSTMENT ####
-  cat("\033[32m", "STEP 2: COVARIATE STANDARDIZATION", "\033[0m", "\n")
+  cat("\033[33m", "== Standardize shapes by covariates", "\033[0m", "\n")
   #  Only keep individuals that have covariate info
   sort_idx1 = pheno.id %in% meta.cov$IID
   pheno.id = pheno.id[sort_idx1]
@@ -149,7 +151,7 @@ runHumanMGP <- function(GOterm,cohort,lm,covs,window,ncomp,npc,signif,nperm,ncor
   
 
   ## GENE/GO SEARCH TERM ####
-  cat("\033[32m", "STEP 3: MATCH GENES TO PROVIDED SEARCH TERM", "\033[0m", "\n")
+  cat("\033[33m", "=== Match Genes to Search Term", "\033[0m", "\n")
   # List all IDs of GO terms available in org.Hs object, and reduce to biological processes
   GO_ID = toTable(org.Hs.egGO)
   GO_ID = unique(GO_ID$go_id[GO_ID$Ontology == "BP"])
@@ -201,7 +203,7 @@ runHumanMGP <- function(GOterm,cohort,lm,covs,window,ncomp,npc,signif,nperm,ncor
   
   
   ## GENES TX START-END SITE ####   
-  cat("\033[32m", "STEP 4A: MAP SNPs TO GENE LIST", "\033[0m", "\n")
+  cat("\033[33m", "==== Map SNPs to Genes", "\033[0m", "\n")
   ensembl = useEnsembl(biomart="ensembl", dataset="hsapiens_gene_ensembl", GRCh=GRCh)
   symbol2info = getBM(attributes = c('ensembl_gene_id','chromosome_name','transcript_start', 'transcript_end', 'hgnc_symbol'), 
                       mart = ensembl, 
@@ -329,7 +331,7 @@ runHumanMGP <- function(GOterm,cohort,lm,covs,window,ncomp,npc,signif,nperm,ncor
   
 
   ## GET GENE COMPOSITE SCORE ####
-  cat("\033[32m", "STEP 4B: GET GENE COMPOSITE SCORE", "\033[0m", "\n")
+  cat("\033[33m", "===== Get Gene Composite Score", "\033[0m", "\n")
   
   #  Do PCA per gene
   gene.names <- unique(seq.indexes$gene)
@@ -372,14 +374,16 @@ runHumanMGP <- function(GOterm,cohort,lm,covs,window,ncomp,npc,signif,nperm,ncor
   
 
   ## TWO BLOCK PLS ####
-  cat("\033[32m", "STEP 5: TWO-BLOCK PLS", "\033[0m", "\n")
+  cat("\033[332m", "====== 2B-PLS Analysis", "\033[0m", "\n")
   
   X = as.matrix(gene.score)
   colnames(X) = gene.id
   Y = as.matrix(pheno.coeff.adj)
   
   # Two-block PLS
-  mgp.pls <- pls2B(X, Y, rounds = nperm, mc.cores = ncores, useCor = T, cv = F, same.config = F)
+  usecor = T
+  if (pls == "cov"){ usecor = F }
+  mgp.pls <- pls2B(X, Y, rounds = nperm, mc.cores = ncores, useCor = usecor, cv = F, same.config = F)
   
   # Reduce number of components to be computed if specified number (ncomp) exceeds max possible components 
   max_comp = min(dim(X)[2],dim(Y)[2])
@@ -392,7 +396,7 @@ runHumanMGP <- function(GOterm,cohort,lm,covs,window,ncomp,npc,signif,nperm,ncor
   
   
   ## SIGNIFICANCE TESTING ####
-  cat("\033[32m", "STEP 6: SIGNIFICANCE TESTING", "\033[0m", "\n")
+  cat("\033[33m", "======= Significance Testing", "\033[0m", "\n")
   
   # SV
   mgp.sv = mgp.pls$CoVar$`singular value`[1:ncomp]
@@ -478,12 +482,12 @@ runHumanMGP <- function(GOterm,cohort,lm,covs,window,ncomp,npc,signif,nperm,ncor
   
   
   ## EXPORT RESULTS ####
-  cat("\033[32m", "STEP 7: SAVE RESULTS", "\033[0m", "\n")
-  
+
   out <- list()
   out$GOterm = GOterm
   out$Cohort = cohort
-
+  out$PLStype = pls
+  
   # PLS summary
   out$PLS = mgp.pls
 
@@ -544,7 +548,7 @@ runHumanMGP <- function(GOterm,cohort,lm,covs,window,ncomp,npc,signif,nperm,ncor
   out$PD = mgp.pdist
 
   
-  cat("\033[32m", "FINISHED", "\033[0m", "\n")
+  cat("\033[33m", "======== Finished", "\033[0m", "\n")
   
   return(out)
 
